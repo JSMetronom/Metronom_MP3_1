@@ -1,165 +1,689 @@
- body {
-        font-family: 'Heebo', sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background-color: #f5f5f5;
-    }
-    
-    .video-player-container {
-        width: 100%;
-        max-width: 600px;
-        background-color: #ffd95b;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    }
-    
-    .video-title {
-        color: #234889;
-        padding: 16px 20px;
-        font-size: 1.5rem;
-        font-weight: 700;
-        text-align: center;
-    }
-    
-    .video-wrapper {
-        position: relative;
-        padding-bottom: 56.25%;
-        height: 0;
-        overflow: hidden;
-    }
-    
-    .video-wrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-    
-    .controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-    }
-    
-    .play-controls {
-        display: flex;
-        gap: 12px;
-    }
-    
-    button {
-        background-color: #234889;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-family: 'Heebo', sans-serif;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    button:hover {
-        background-color: #1a3666;
-        transform: translateY(-2px);
-    }
-    
-    button:active {
-        transform: translateY(0);
-    }
-    
-    .volume-control {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .volume-slider {
-        -webkit-appearance: none;
-        width: 100px;
-        height: 6px;
-        border-radius: 3px;
-        background: #234889;
-        outline: none;
-    }
-    
-    .volume-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #234889;
-        cursor: pointer;
-    }
-    
-    .volume-slider::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #234889;
-        cursor: pointer;
-        border: none;
-    }
-    
-    .volume-icon {
-        color: #234889;
-        font-size: 1.2rem;
-    }
-    
-    @media (max-width: 480px) {
-        .video-title {
-            font-size: 1.2rem;
-            padding: 12px 16px;
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metronom Zwilling Trailer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', 'Arial Hebrew', Arial, sans-serif;
+            font-weight: 600;
+            color: #234889;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+        }
+        
+        .video-widget {
+            width: 100%;
+            max-width: 600px;
+            background: linear-gradient(to bottom, #ffe78a, #ffd95b);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(35, 72, 137, 0.15), 
+                        0 5px 15px rgba(0, 0, 0, 0.07);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 0 auto;
+        }
+        
+        .video-widget:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(35, 72, 137, 0.2), 
+                        0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .widget-header {
+            padding: 22px 25px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .widget-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background-color: rgba(35, 72, 137, 0.3);
+            border-radius: 3px;
+        }
+        
+        .widget-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 5px;
+            color: #234889;
+            text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #000;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-container iframe,
+        .video-container .placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #000;
+            color: #fff;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .placeholder:hover img {
+            transform: scale(1.05);
+        }
+        
+        .placeholder .play-button {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 217, 91, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+        
+        .placeholder:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            transition: background 0.3s ease;
+        }
+        
+        .placeholder:hover:before {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .placeholder:hover .play-button {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .placeholder .play-button svg {
+            width: 30px;
+            height: 30px;
+            fill: #234889;
+            margin-left: 5px;
         }
         
         .controls {
+            display: flex;
             flex-direction: column;
+            padding: 20px 25px;
+            background: linear-gradient(to top, #ffe78a, #ffd95b);
+            gap: 15px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(35, 72, 137, 0.2);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #234889;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .progress-handle {
+            width: 16px;
+            height: 16px;
+            background-color: #234889;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            left: 0%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #234889;
+            margin-bottom: 10px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .playback-controls {
+            display: flex;
             gap: 12px;
         }
         
-        .volume-control {
-            width: 100%;
-            justify-content: center;
+        .control-button {
+            background-color: #234889;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-family: 'Montserrat', 'Arial Hebrew', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 3px 10px rgba(35, 72, 137, 0.2);
         }
-    }
-</style>
-
-<script>
-    let tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    let firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    let player;
-    
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('youtube-player', {
-            events: {
-                'onReady': onPlayerReady
+        
+        .control-button:hover {
+            background-color: #1a3666;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(35, 72, 137, 0.3);
+        }
+        
+        .control-button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(35, 72, 137, 0.2);
+        }
+        
+        .control-button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(35, 72, 137, 0.1);
+        }
+        
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 100px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(35, 72, 137, 0.3);
+            outline: none;
+            transition: background 0.3s ease;
+        }
+        
+        .volume-slider:hover {
+            background: rgba(35, 72, 137, 0.5);
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #234889;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #234889;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .volume-icon {
+            width: 20px;
+            height: 20px;
+            fill: #234889;
+        }
+        
+        @media (max-width: 600px) {
+            .widget-title {
+                font-size: 1.3rem;
             }
-        });
-    }
+            
+            .control-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .volume-control {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .playback-controls {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-widget">
+        <div class="widget-header">
+            <h1 class="widget-title">Metronom Zwilling Trailer</h1>
+        </div>
+        
+        <div class="video-container" id="videoContainer">
+            <div class="placeholder" id="placeholder">
+                <!-- Placeholder image will be set via JavaScript -->
+                <div class="play-button" id="playButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <div class="progress-handle" id="progressHandle"></div>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+            
+            <div class="control-row">
+                <div class="playback-controls">
+                    <button class="control-button" id="playPauseBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Abspielen
+                    </button>
+                    <button class="control-button" id="stopBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M6 6h12v12H6z"/>
+                        </svg>
+                        Stoppen
+                    </button>
+                </div>
+                
+                <div class="volume-control">
+                    <svg class="volume-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                    <input type="range" min="0" max="100" value="80" class="volume-slider" id="volumeSlider">
+                </div>
+            </div>
+        </div>
+    </div>
 
-    function onPlayerReady(event) {
-        document.getElementById('play-btn').addEventListener('click', function() {
-            player.playVideo();
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vimeo video ID from the URL
+            const vimeoId = '1075288364';
+            let player = null;
+            let isPlaying = false;
+            let volume = 0.8;
+            let videoDuration = 0;
+            let progressUpdateInterval;
+            let playerReady = false;
+            
+            // DOM Elements
+            const videoContainer = document.getElementById('videoContainer');
+            const placeholder = document.getElementById('placeholder');
+            const playButton = document.getElementById('playButton');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const progressBar = document.getElementById('progressBar');
+            const progressHandle = document.getElementById('progressHandle');
+            const progressContainer = document.getElementById('progressContainer');
+            const currentTimeDisplay = document.getElementById('currentTime');
+            const durationDisplay = document.getElementById('duration');
+            
+            // Set default thumbnail
+            const defaultThumb = document.createElement('img');
+            defaultThumb.src = "https://i.vimeocdn.com/video/1075288364_640.jpg";
+            defaultThumb.alt = "Video Thumbnail";
+            placeholder.insertBefore(defaultThumb, placeholder.firstChild);
+            
+            // Try to get better thumbnail from Vimeo API
+            fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.thumbnail_url) {
+                        defaultThumb.src = data.thumbnail_url;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching Vimeo thumbnail:", error);
+                });
+            
+            // Format time in MM:SS
+            function formatTime(seconds) {
+                if (isNaN(seconds) || seconds === Infinity) return "0:00";
+                const minutes = Math.floor(seconds / 60);
+                seconds = Math.floor(seconds % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+            
+            // Update progress bar
+            function updateProgress(currentTime) {
+                if (videoDuration > 0 && !isNaN(currentTime)) {
+                    const progress = (currentTime / videoDuration) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressHandle.style.left = `${progress}%`;
+                    currentTimeDisplay.textContent = formatTime(currentTime);
+                }
+            }
+            
+            // Create Vimeo player
+            function createPlayer() {
+                // Create a div for the player
+                const playerDiv = document.createElement('div');
+                playerDiv.id = 'vimeoPlayerContainer';
+                playerDiv.style.position = 'absolute';
+                playerDiv.style.top = '0';
+                playerDiv.style.left = '0';
+                playerDiv.style.width = '100%';
+                playerDiv.style.height = '100%';
+                
+                // Remove placeholder and add player div
+                placeholder.style.display = 'none';
+                videoContainer.appendChild(playerDiv);
+                
+                // Create Vimeo player
+                player = new Vimeo.Player(playerDiv, {
+                    id: vimeoId,
+                    width: '100%',
+                    height: '100%',
+                    autoplay: true,
+                    title: false,
+                    byline: false,
+                    portrait: false,
+                    controls: false
+                });
+                
+                // Set initial volume
+                player.setVolume(volume);
+                
+                // Get video duration
+                player.getDuration().then(function(duration) {
+                    videoDuration = duration;
+                    durationDisplay.textContent = formatTime(duration);
+                }).catch(function(error) {
+                    console.error("Error getting duration:", error);
+                });
+                
+                // Add event listeners
+                player.on('play', function() {
+                    isPlaying = true;
+                    updatePlayPauseButton();
+                    
+                    // Start progress update interval
+                    clearInterval(progressUpdateInterval);
+                    progressUpdateInterval = setInterval(function() {
+                        player.getCurrentTime().then(function(seconds) {
+                            updateProgress(seconds);
+                        }).catch(function(error) {
+                            console.error("Error getting current time:", error);
+                        });
+                    }, 100);
+                });
+                
+                player.on('pause', function() {
+                    isPlaying = false;
+                    updatePlayPauseButton();
+                    clearInterval(progressUpdateInterval);
+                });
+                
+                player.on('ended', function() {
+                    isPlaying = false;
+                    updatePlayPauseButton();
+                    clearInterval(progressUpdateInterval);
+                });
+                
+                player.on('loaded', function() {
+                    playerReady = true;
+                });
+                
+                player.on('timeupdate', function(data) {
+                    updateProgress(data.seconds);
+                });
+                
+                player.on('volumechange', function(data) {
+                    volume = data.volume;
+                    volumeSlider.value = volume * 100;
+                });
+                
+                player.on('error', function(error) {
+                    console.error("Vimeo player error:", error);
+                });
+                
+                return player;
+            }
+            
+            // Load video and start playing
+            function loadAndPlayVideo() {
+                if (!player) {
+                    player = createPlayer();
+                    
+                    // Wait a moment for the player to initialize before playing
+                    setTimeout(function() {
+                        player.play().catch(function(error) {
+                            console.error("Error playing video:", error);
+                        });
+                    }, 1000);
+                } else {
+                    player.play().catch(function(error) {
+                        console.error("Error playing video:", error);
+                    });
+                }
+            }
+            
+            // Toggle play/pause
+            function togglePlayPause() {
+                if (!player) {
+                    loadAndPlayVideo();
+                    return;
+                }
+                
+                player.getPaused().then(function(paused) {
+                    if (paused) {
+                        player.play().then(function() {
+                            isPlaying = true;
+                            updatePlayPauseButton();
+                        }).catch(function(error) {
+                            console.error("Error playing video:", error);
+                        });
+                    } else {
+                        player.pause().then(function() {
+                            isPlaying = false;
+                            updatePlayPauseButton();
+                        }).catch(function(error) {
+                            console.error("Error pausing video:", error);
+                        });
+                    }
+                }).catch(function(error) {
+                    console.error("Error getting paused state:", error);
+                    
+                    // Fallback if getPaused fails
+                    if (!isPlaying) {
+                        player.play().then(function() {
+                            isPlaying = true;
+                            updatePlayPauseButton();
+                        }).catch(function(error) {
+                            console.error("Error playing video:", error);
+                        });
+                    } else {
+                        player.pause().then(function() {
+                            isPlaying = false;
+                            updatePlayPauseButton();
+                        }).catch(function(error) {
+                            console.error("Error pausing video:", error);
+                        });
+                    }
+                });
+            }
+            
+            // Stop video
+            function stopVideo() {
+                if (player) {
+                    player.pause().then(function() {
+                        player.setCurrentTime(0).then(function() {
+                            isPlaying = false;
+                            updatePlayPauseButton();
+                            updateProgress(0);
+                        }).catch(function(error) {
+                            console.error("Error setting current time:", error);
+                        });
+                    }).catch(function(error) {
+                        console.error("Error pausing video:", error);
+                    });
+                }
+            }
+            
+            // Update play/pause button text and icon
+            function updatePlayPauseButton() {
+                if (isPlaying) {
+                    playPauseBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                        Pause
+                    `;
+                } else {
+                    playPauseBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Abspielen
+                    `;
+                }
+            }
+            
+            // Set volume
+            function setVolume(value) {
+                volume = value / 100;
+                if (player) {
+                    player.setVolume(volume).catch(function(error) {
+                        console.error("Error setting volume:", error);
+                    });
+                }
+            }
+            
+            // Seek to position in video
+            function seekTo(event) {
+                if (!player) return;
+                
+                const rect = progressContainer.getBoundingClientRect();
+                const position = (event.clientX - rect.left) / rect.width;
+                const seekTime = videoDuration * position;
+                
+                if (!isNaN(seekTime) && isFinite(seekTime)) {
+                    player.setCurrentTime(seekTime).then(function() {
+                        updateProgress(seekTime);
+                    }).catch(function(error) {
+                        console.error("Error seeking:", error);
+                    });
+                }
+            }
+            
+            // Event Listeners
+            playButton.addEventListener('click', loadAndPlayVideo);
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            stopBtn.addEventListener('click', stopVideo);
+            
+            volumeSlider.addEventListener('input', function() {
+                setVolume(this.value);
+            });
+            
+            // Progress bar interaction
+            progressContainer.addEventListener('click', seekTo);
+            
+            // Drag functionality for progress handle
+            let isDragging = false;
+            
+            progressHandle.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                e.preventDefault(); // Prevent text selection
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    seekTo(e);
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
         });
-        
-        document.getElementById('stop-btn').addEventListener('click', function() {
-            player.pauseVideo();
-        });
-        
-        const volumeSlider = document.getElementById('volume-slider');
-        volumeSlider.addEventListener('input', function() {
-            player.setVolume(volumeSlider.value);
-        });
-        
-        player.setVolume(volumeSlider.value);
-    }
-</script>
+    </script>
+</body>
+</html>
