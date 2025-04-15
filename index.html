@@ -1,0 +1,165 @@
+ body {
+        font-family: 'Heebo', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f5f5f5;
+    }
+    
+    .video-player-container {
+        width: 100%;
+        max-width: 600px;
+        background-color: #ffd95b;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .video-title {
+        color: #234889;
+        padding: 16px 20px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+    }
+    
+    .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+    }
+    
+    .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+    }
+    
+    .play-controls {
+        display: flex;
+        gap: 12px;
+    }
+    
+    button {
+        background-color: #234889;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-family: 'Heebo', sans-serif;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    button:hover {
+        background-color: #1a3666;
+        transform: translateY(-2px);
+    }
+    
+    button:active {
+        transform: translateY(0);
+    }
+    
+    .volume-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .volume-slider {
+        -webkit-appearance: none;
+        width: 100px;
+        height: 6px;
+        border-radius: 3px;
+        background: #234889;
+        outline: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #234889;
+        cursor: pointer;
+    }
+    
+    .volume-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #234889;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .volume-icon {
+        color: #234889;
+        font-size: 1.2rem;
+    }
+    
+    @media (max-width: 480px) {
+        .video-title {
+            font-size: 1.2rem;
+            padding: 12px 16px;
+        }
+        
+        .controls {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .volume-control {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    let firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    let player;
+    
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('youtube-player', {
+            events: {
+                'onReady': onPlayerReady
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        document.getElementById('play-btn').addEventListener('click', function() {
+            player.playVideo();
+        });
+        
+        document.getElementById('stop-btn').addEventListener('click', function() {
+            player.pauseVideo();
+        });
+        
+        const volumeSlider = document.getElementById('volume-slider');
+        volumeSlider.addEventListener('input', function() {
+            player.setVolume(volumeSlider.value);
+        });
+        
+        player.setVolume(volumeSlider.value);
+    }
+</script>
