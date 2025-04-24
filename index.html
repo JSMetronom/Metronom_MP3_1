@@ -3,19 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wetter Niedersachsen</title>
+  <title>Wetter Niedersachsen - Metronom Städte</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: white;
+      font-size: 16px;
+      color: #234889;
+      cursor: pointer;
+      margin-right: 10px;
+      max-width: 100%;
+    }
+    select:focus {
+      outline: none;
+      border-color: #234889;
+    }
+    .city-selector {
+      margin-bottom: 12px;
+    }
+  </style>
 </head>
 <body>
   <div style="font-family: Arial, sans-serif; background-color: #ffd95b; color: #234889; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 600px; margin: 0 auto;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
       <h2 style="margin: 0; font-size: 24px;">Wetter Niedersachsen</h2>
       <div style="font-size: 14px;" id="ns-weather-last-updated">Aktualisiert: ...</div>
+    </div>
+    
+    <div class="city-selector">
+      <label for="city-select" style="font-weight: bold; margin-right: 8px;">Stadt:</label>
+      <select id="city-select" onchange="updateWeatherForCity()">
+        <option value="hannover">Hannover</option>
+        <option value="hamburg">Hamburg</option>
+        <option value="bremen">Bremen</option>
+        <option value="uelzen">Uelzen</option>
+        <option value="lueneburg">Lüneburg</option>
+        <option value="celle">Celle</option>
+        <option value="wolfsburg">Wolfsburg</option>
+        <option value="braunschweig">Braunschweig</option>
+        <option value="goettingen">Göttingen</option>
+        <option value="buxtehude">Buxtehude</option>
+        <option value="stade">Stade</option>
+        <option value="cuxhaven">Cuxhaven</option>
+      </select>
     </div>
     
     <div style="background-color: rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
       <div>
         <div style="font-size: 28px; font-weight: bold;" id="ns-weather-current-temp">--&deg;C</div>
         <div style="font-size: 18px;" id="ns-weather-current-condition">Laden...</div>
+        <div style="font-size: 16px; margin-top: 4px;" id="ns-weather-city">Hannover</div>
       </div>
       <div id="ns-weather-current-icon"></div>
     </div>
@@ -42,30 +86,63 @@
     // Rain drop icon as SVG
     const rainDropIcon = `<svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;"><path d="M12 21.5C16.1421 21.5 19.5 18.1421 19.5 14C19.5 10.5 16.5 7 12 2C7.5 7 4.5 10.5 4.5 14C4.5 18.1421 7.85786 21.5 12 21.5Z" fill="#234889"/></svg>`;
 
+    // City data with temperature variations
+    const cityData = {
+      'hannover': { tempOffset: 0, precipModifier: 0 },
+      'hamburg': { tempOffset: -1, precipModifier: 10 },
+      'bremen': { tempOffset: -1, precipModifier: 15 },
+      'uelzen': { tempOffset: -2, precipModifier: -5 },
+      'lueneburg': { tempOffset: -1, precipModifier: 5 },
+      'celle': { tempOffset: -1, precipModifier: -10 },
+      'wolfsburg': { tempOffset: 1, precipModifier: -5 },
+      'braunschweig': { tempOffset: 1, precipModifier: -10 },
+      'goettingen': { tempOffset: 2, precipModifier: -15 },
+      'buxtehude': { tempOffset: -1, precipModifier: 15 },
+      'stade': { tempOffset: -1, precipModifier: 20 },
+      'cuxhaven': { tempOffset: -2, precipModifier: 25 }
+    };
+
+    // City name display mapping
+    const cityDisplayNames = {
+      'hannover': 'Hannover',
+      'hamburg': 'Hamburg',
+      'bremen': 'Bremen',
+      'uelzen': 'Uelzen',
+      'lueneburg': 'Lüneburg',
+      'celle': 'Celle',
+      'wolfsburg': 'Wolfsburg',
+      'braunschweig': 'Braunschweig',
+      'goettingen': 'Göttingen',
+      'buxtehude': 'Buxtehude',
+      'stade': 'Stade',
+      'cuxhaven': 'Cuxhaven'
+    };
+
     // Generate weather data
-    function nsGenerateWeatherData() {
+    function nsGenerateWeatherData(cityKey = 'hannover') {
       const now = new Date();
       const month = now.getMonth();
+      const citySettings = cityData[cityKey] || cityData['hannover'];
       
       // Define seasonal parameters
       let tempMinRange, tempMaxRange, conditions;
       
       // Set seasonal data
       if (month === 11 || month === 0 || month === 1) { // Winter
-        tempMinRange = [-5, 3];
-        tempMaxRange = [0, 8];
+        tempMinRange = [-5 + citySettings.tempOffset, 3 + citySettings.tempOffset];
+        tempMaxRange = [0 + citySettings.tempOffset, 8 + citySettings.tempOffset];
         conditions = ['Bedeckt', 'Neblig', 'Schneefall', 'Leichter Regen'];
       } else if (month >= 2 && month <= 4) { // Spring
-        tempMinRange = [3, 10];
-        tempMaxRange = [10, 18];
+        tempMinRange = [3 + citySettings.tempOffset, 10 + citySettings.tempOffset];
+        tempMaxRange = [10 + citySettings.tempOffset, 18 + citySettings.tempOffset];
         conditions = ['Heiter', 'Wolkig', 'Leichter Regen', 'Sonnig'];
       } else if (month >= 5 && month <= 7) { // Summer
-        tempMinRange = [12, 18];
-        tempMaxRange = [20, 30];
+        tempMinRange = [12 + citySettings.tempOffset, 18 + citySettings.tempOffset];
+        tempMaxRange = [20 + citySettings.tempOffset, 30 + citySettings.tempOffset];
         conditions = ['Sonnig', 'Heiter', 'Wolkig', 'Gewitter'];
       } else { // Fall
-        tempMinRange = [5, 12];
-        tempMaxRange = [10, 20];
+        tempMinRange = [5 + citySettings.tempOffset, 12 + citySettings.tempOffset];
+        tempMaxRange = [10 + citySettings.tempOffset, 20 + citySettings.tempOffset];
         conditions = ['Wolkig', 'Bedeckt', 'Regnerisch', 'Neblig'];
       }
       
@@ -73,6 +150,9 @@
       function getRandomInRange(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
       }
+      
+      // Update city name
+      document.getElementById('ns-weather-city').innerHTML = cityDisplayNames[cityKey] || cityDisplayNames['hannover'];
       
       // Update current weather
       const currentTemp = getRandomInRange(tempMaxRange[0], tempMaxRange[1]);
@@ -95,7 +175,10 @@
         const tempMin = getRandomInRange(tempMinRange[0], tempMinRange[1]);
         const tempMax = getRandomInRange(tempMaxRange[0], tempMaxRange[1]);
         const condition = conditions[Math.floor(Math.random() * conditions.length)];
-        const precipProb = nsGetPrecipProbability(condition);
+        let precipProb = nsGetPrecipProbability(condition) + citySettings.precipModifier;
+        
+        // Ensure precipitation probability is within bounds
+        precipProb = Math.max(0, Math.min(100, precipProb));
         
         const weekday = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][forecastDate.getDay()];
         const formattedDate = forecastDate.toLocaleDateString('de-DE');
@@ -118,6 +201,13 @@
       
       // Update last updated time
       document.getElementById('ns-weather-last-updated').innerHTML = `Aktualisiert: ${now.toLocaleDateString('de-DE')} ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // Update weather when city is changed
+    function updateWeatherForCity() {
+      const citySelect = document.getElementById('city-select');
+      const selectedCity = citySelect.value;
+      nsGenerateWeatherData(selectedCity);
     }
     
     // Helper functions
@@ -149,10 +239,10 @@
     function nsGetConditionText(condition) {
       const c = condition.toLowerCase();
       if (c.includes('sonnig')) return 'Sonnig und klar';
-      if (c.includes('heiter')) return '&Uuml;berwiegend sonnig mit leichter Bew&ouml;lkung';
-      if (c.includes('wolkig')) return 'Teilweise bew&ouml;lkt mit sonnigen Abschnitten';
-      if (c.includes('bedeckt')) return '&Uuml;berwiegend bew&ouml;lkt';
-      if (c.includes('neblig')) return 'Neblig mit eingeschr&auml;nkter Sicht';
+      if (c.includes('heiter')) return 'Überwiegend sonnig mit leichter Bewölkung';
+      if (c.includes('wolkig')) return 'Teilweise bewölkt mit sonnigen Abschnitten';
+      if (c.includes('bedeckt')) return 'Überwiegend bewölkt';
+      if (c.includes('neblig')) return 'Neblig mit eingeschränkter Sicht';
       if (c.includes('regen')) return 'Leichter Regen oder Nieselregen';
       if (c.includes('gewitter')) return 'Gewitter mit Regenschauern';
       if (c.includes('schnee')) return 'Schneefall oder Schneeregen';
@@ -168,7 +258,9 @@
     }, 1800000);
     
     // Refresh data once per day
-    setInterval(nsGenerateWeatherData, 86400000);
+    setInterval(function() {
+      updateWeatherForCity();
+    }, 86400000);
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9354d7fd42845d4a',t:'MTc0NTQ4OTc3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9354f19460893a7e',t:'MTc0NTQ5MDgxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
