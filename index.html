@@ -5,65 +5,367 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notiz-Editor</title>
+    <!-- Nur die PDF-Bibliothek beibehalten -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Grundlegende Stile für das gesamte Dokument */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            /* Immer Scrollbar anzeigen, auch wenn nicht nötig */
+            overflow-y: scroll;
+        }
+        
+        /* Container für den gesamten Editor */
+        .editor-wrapper {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+            background: linear-gradient(to bottom right, #ebf4ff, #e0e7ff);
+            /* Mindesthöhe entfernt, damit die Scrollbar funktioniert */
+            height: auto;
+        }
+        
+        @font-face {
+            font-family: 'FF Meta Hebrew';
+            src: local('FF Meta Hebrew Bold'), local('FFMetaHebrew-Bold');
+            font-weight: bold;
+            font-style: normal;
+        }
+        
+        h1.main-title {
+            font-family: 'FF Meta Hebrew', 'Arial Hebrew', 'Arial', sans-serif;
+            font-weight: bold;
+            color: #234889;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-text {
+            color: #ff0000;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Editor-Container mit fester Höhe und Scrollbar */
+        .editor-container {
+            border: 2px solid #ffd95b;
+            border-radius: 0.375rem;
+            background-color: white;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Verhindert Überlauf */
+        }
+        
+        /* Toolbar-Bereich */
+        .toolbar {
+            border-bottom: 2px solid #ffd95b;
+            padding: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            background-color: #f9fafb;
+        }
+        
+        /* Editor-Bereich mit Scrollbar */
+        #editor {
+            flex: 1;
+            padding: 1rem;
+            min-height: 300px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: Arial, sans-serif;
+            color: black;
+            box-sizing: border-box;
+        }
+        
+        /* Scrollbar-Styling für verschiedene Browser */
+        #editor::-webkit-scrollbar, body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        #editor::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+        
+        #editor::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+            background: #ffd95b;
+            border-radius: 5px;
+        }
+        
+        #editor::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
+            background: #e6c352;
+        }
+        
+        #editor:focus {
+            outline: none;
+        }
+        
+        /* Styling für Listen im Editor */
+        #editor ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        #editor ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        /* Überschriften im Editor */
+        #editor h1 {
+            font-size: 1.8em;
+            margin: 0.5em 0;
+        }
+        
+        #editor h2 {
+            font-size: 1.5em;
+            margin: 0.5em 0;
+        }
+        
+        #editor h3 {
+            font-size: 1.3em;
+            margin: 0.5em 0;
+        }
+        
+        /* Toolbar-Buttons */
+        .toolbar-btn {
+            padding: 0.25rem 0.75rem;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .toolbar-btn.active {
+            background-color: #e5e7eb;
+        }
+        
+        /* Dropdown-Menü */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d5db;
+        }
+        
+        .dropdown-content button {
+            color: black;
+            padding: 8px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            width: 100%;
+            border: none;
+            background: none;
+        }
+        
+        .dropdown-content button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        /* Titel-Eingabefeld */
+        #title {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border: none;
+            border-bottom: 2px solid #a5b4fc;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        
+        #title:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        /* Button-Container */
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            /* Sicherstellen, dass die Buttons sichtbar sind */
+            padding: 1rem 0;
+        }
+        
+        /* Action-Buttons */
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .action-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.5rem;
+        }
+        
+        .pdf-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .pdf-btn:hover {
+            background-color: #dc2626;
+        }
+        
+        .text-btn {
+            background-color: #2563eb;
+            color: white;
+        }
+        
+        .text-btn:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .clear-btn {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            background-color: #4b5563;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 1.5rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Für iframe-Einbettung */
+        .in-iframe {
+            /* Zusätzliche Stile für iframe-Kontext */
+            height: 100%;
+            overflow-y: scroll;
+        }
+        
+        /* Hinweis für Download-Buttons */
+        .scroll-hint {
+            text-align: center;
+            color: #4b5563;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-center text-indigo-700">Notiz-Editor</h1>
-            <p class="text-center text-gray-600 mt-2">Erstelle und exportiere deine Notizen einfach als Word oder PDF</p>
+<body>
+    <div class="editor-wrapper">
+        <header>
+            <h1 class="main-title text-center">Notiz-Editor</h1>
+            <p class="warning-text text-center">Lade dir deine Notizen am besten täglich herunter. Sie werden zwar lokal in deinem Browser gespeichert, können jedoch beim Löschen des Cache verloren gehen!</p>
         </header>
 
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <div class="mb-4">
-                <input type="text" id="title" placeholder="Titel deiner Notiz" class="w-full px-4 py-2 text-xl font-semibold border-b-2 border-indigo-200 focus:border-indigo-500 focus:outline-none">
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <div>
+                <input type="text" id="title" placeholder="Titel deiner Notiz">
             </div>
 
-            <div class="mb-6 border border-gray-200 rounded-md">
-                <div class="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap gap-2">
-                    <button onclick="formatText('bold')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
+            <div class="editor-container">
+                <div class="toolbar">
+                    <button type="button" onclick="execFormatCommand('bold')" class="toolbar-btn">
                         <strong>B</strong>
                     </button>
-                    <button onclick="formatText('italic')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
+                    <button type="button" onclick="execFormatCommand('italic')" class="toolbar-btn">
                         <em>I</em>
                     </button>
-                    <button onclick="formatText('underline')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
+                    <button type="button" onclick="execFormatCommand('underline')" class="toolbar-btn">
                         <u>U</u>
                     </button>
-                    <select id="headingSelect" onchange="formatHeading()" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
-                        <option value="">Überschrift</option>
-                        <option value="h1">Überschrift 1</option>
-                        <option value="h2">Überschrift 2</option>
-                        <option value="h3">Überschrift 3</option>
-                    </select>
-                    <button onclick="formatText('insertUnorderedList')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
+                    
+                    <!-- Dropdown für Überschriften -->
+                    <div class="dropdown">
+                        <button class="toolbar-btn flex items-center">
+                            Überschrift
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="dropdown-content">
+                            <button type="button" onclick="execFormatCommand('formatBlock', '<h1>')">Überschrift 1</button>
+                            <button type="button" onclick="execFormatCommand('formatBlock', '<h2>')">Überschrift 2</button>
+                            <button type="button" onclick="execFormatCommand('formatBlock', '<h3>')">Überschrift 3</button>
+                            <button type="button" onclick="execFormatCommand('formatBlock', '<p>')">Normal</button>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="execFormatCommand('insertUnorderedList')" class="toolbar-btn">
                         • Liste
                     </button>
-                    <button onclick="formatText('insertOrderedList')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition">
+                    <button type="button" onclick="execFormatCommand('insertOrderedList')" class="toolbar-btn">
                         1. Liste
                     </button>
                 </div>
-                <div id="editor" contenteditable="true" class="p-4 min-h-[300px] focus:outline-none"></div>
+                <div id="editor" contenteditable="true"></div>
             </div>
+            
+            <p class="scroll-hint">Nach unten scrollen für Download-Optionen</p>
 
-            <div class="flex flex-wrap gap-4 justify-center">
-                <button onclick="exportAsPDF()" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <div class="button-container">
+                <button onclick="exportAsPDF()" class="action-btn pdf-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
                     </svg>
                     Als PDF speichern
                 </button>
-                <button onclick="exportAsWord()" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <button onclick="exportAsText()" class="action-btn text-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
                     </svg>
-                    Als Word speichern
+                    Als Text speichern
                 </button>
-                <button onclick="clearEditor()" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <button onclick="clearEditor()" class="action-btn clear-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                     </svg>
                     Löschen
@@ -71,7 +373,7 @@
             </div>
         </div>
 
-        <div class="mt-6 text-center text-sm text-gray-500">
+        <div class="footer">
             <p>Deine Notizen werden lokal in deinem Browser gespeichert.</p>
         </div>
     </div>
@@ -98,20 +400,9 @@
             localStorage.setItem('editorTitle', this.value);
         });
         
-        // Text-Formatierung
-        function formatText(command) {
-            document.execCommand(command, false, null);
-            document.getElementById('editor').focus();
-        }
-        
-        function formatHeading() {
-            const headingType = document.getElementById('headingSelect').value;
-            if (headingType) {
-                document.execCommand('formatBlock', false, '<' + headingType + '>');
-            } else {
-                document.execCommand('formatBlock', false, '<p>');
-            }
-            document.getElementById('headingSelect').selectedIndex = 0;
+        // Verbesserte Text-Formatierung
+        function execFormatCommand(command, value = null) {
+            document.execCommand(command, false, value);
             document.getElementById('editor').focus();
         }
         
@@ -127,49 +418,83 @@
         
         // Als PDF exportieren
         function exportAsPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const title = document.getElementById('title').value || 'Unbenannte Notiz';
-            const content = document.getElementById('editor').innerText;
-            
-            doc.setFontSize(18);
-            doc.text(title, 20, 20);
-            
-            doc.setFontSize(12);
-            
-            // Einfache Textumbruch-Funktion
-            const textLines = doc.splitTextToSize(content, 170);
-            doc.text(textLines, 20, 30);
-            
-            doc.save(title + '.pdf');
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const title = document.getElementById('title').value || 'Unbenannte Notiz';
+                const content = document.getElementById('editor').innerText;
+                
+                doc.setFontSize(18);
+                doc.text(title, 20, 20);
+                
+                doc.setFontSize(12);
+                
+                // Einfache Textumbruch-Funktion
+                const textLines = doc.splitTextToSize(content, 170);
+                doc.text(textLines, 20, 30);
+                
+                doc.save(title + '.pdf');
+            } catch (error) {
+                console.error("Fehler beim PDF-Export:", error);
+                alert("Fehler beim PDF-Export. Bitte versuche es später erneut.");
+            }
         }
         
-        // Als Word exportieren
-        function exportAsWord() {
-            const docx = window.docx;
-            const title = document.getElementById('title').value || 'Unbenannte Notiz';
-            const content = document.getElementById('editor').innerText;
-            
-            const doc = new docx.Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        new docx.Paragraph({
-                            text: title,
-                            heading: docx.HeadingLevel.HEADING_1
-                        }),
-                        new docx.Paragraph({
-                            text: content
-                        })
-                    ]
-                }]
-            });
-            
-            docx.Packer.toBlob(doc).then(blob => {
-                window.saveAs(blob, title + '.docx');
-            });
+        // Als Text exportieren - einfache und zuverlässige Methode
+        function exportAsText() {
+            try {
+                const title = document.getElementById('title').value || 'Unbenannte Notiz';
+                const content = document.getElementById('editor').innerText;
+                
+                // Titel und Inhalt kombinieren
+                const fullText = title + "\n\n" + content;
+                
+                // Blob erstellen
+                const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+                
+                // Download-Link erstellen und klicken
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = title + '.txt';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Fehler beim Text-Export:", error);
+                alert("Fehler beim Speichern der Textdatei. Bitte versuche es später erneut.");
+            }
         }
+        
+        // Fokus auf den Editor setzen, wenn die Seite geladen ist
+        window.onload = function() {
+            // Stelle sicher, dass der Editor richtig initialisiert wird
+            document.getElementById('editor').focus();
+            
+            // Füge Event-Listener für die Toolbar-Buttons hinzu
+            const buttons = document.querySelectorAll('.toolbar-btn');
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', function(e) {
+                    // Verhindere, dass der Editor den Fokus verliert
+                    e.preventDefault();
+                });
+            });
+            
+            // Verhindere, dass Dropdown-Buttons den Fokus verlieren
+            const dropdownButtons = document.querySelectorAll('.dropdown-content button');
+            dropdownButtons.forEach(button => {
+                button.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                });
+            });
+            
+            // Stelle sicher, dass der Editor auch in einem iframe korrekt funktioniert
+            if (window.self !== window.top) {
+                // Wir sind in einem iframe
+                document.body.classList.add('in-iframe');
+            }
+        };
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9402a1cde3bad2ee',t:'MTc0NzMxMjA3NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'940973c1503ed275',t:'MTc0NzM4MzU4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
