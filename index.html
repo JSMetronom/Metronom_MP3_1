@@ -75,6 +75,32 @@
             background-color: #f9fafb;
         }
         
+        /* Notiz-Tabs */
+        .note-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .note-tab {
+            padding: 0.5rem 1rem;
+            background-color: #e5e7eb;
+            border: 2px solid #234889;
+            border-radius: 0.375rem 0.375rem 0 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .note-tab:hover {
+            background-color: #d1d5db;
+        }
+        
+        .note-tab.active {
+            background-color: #234889;
+            color: white;
+        }
+        
         /* Editor-Bereich mit Scrollbar */
         #editor {
             flex: 1;
@@ -298,6 +324,14 @@
             50% { opacity: 1; }
             100% { opacity: 0.6; }
         }
+        
+        /* Trennlinie für die Toolbar */
+        .toolbar-divider {
+            height: 24px;
+            width: 1px;
+            background-color: #d1d5db;
+            margin: 0 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -308,6 +342,13 @@
         </header>
 
         <div class="bg-white rounded-lg shadow-lg p-4">
+            <!-- Notiz-Tabs -->
+            <div class="note-tabs">
+                <button id="note-tab-1" class="note-tab active" onclick="switchNote(1)">Notiz 1</button>
+                <button id="note-tab-2" class="note-tab" onclick="switchNote(2)">Notiz 2</button>
+                <button id="note-tab-3" class="note-tab" onclick="switchNote(3)">Notiz 3</button>
+            </div>
+
             <div>
                 <input type="text" id="title" placeholder="Titel deiner Notiz">
             </div>
@@ -380,25 +421,60 @@
     </div>
 
     <script>
-        // Automatisches Speichern der Notizen
-        let savedContent = localStorage.getItem('editorContent');
-        let savedTitle = localStorage.getItem('editorTitle');
+        // Aktuelle Notiz-Nummer (1, 2 oder 3)
+        let currentNote = 1;
         
-        if (savedContent) {
-            document.getElementById('editor').innerHTML = savedContent;
+        // Funktion zum Wechseln zwischen Notizen
+        function switchNote(noteNumber) {
+            // Aktuelle Notiz speichern
+            saveCurrentNote();
+            
+            // Notiz wechseln
+            currentNote = noteNumber;
+            
+            // Tabs aktualisieren
+            updateTabs();
+            
+            // Gespeicherte Notiz laden
+            loadCurrentNote();
         }
         
-        if (savedTitle) {
-            document.getElementById('title').value = savedTitle;
+        // Tabs aktualisieren
+        function updateTabs() {
+            // Alle Tabs deaktivieren
+            document.querySelectorAll('.note-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Aktuellen Tab aktivieren
+            document.getElementById(`note-tab-${currentNote}`).classList.add('active');
+        }
+        
+        // Aktuelle Notiz speichern
+        function saveCurrentNote() {
+            const content = document.getElementById('editor').innerHTML;
+            const title = document.getElementById('title').value;
+            
+            localStorage.setItem(`editorContent_${currentNote}`, content);
+            localStorage.setItem(`editorTitle_${currentNote}`, title);
+        }
+        
+        // Aktuelle Notiz laden
+        function loadCurrentNote() {
+            const savedContent = localStorage.getItem(`editorContent_${currentNote}`);
+            const savedTitle = localStorage.getItem(`editorTitle_${currentNote}`);
+            
+            document.getElementById('editor').innerHTML = savedContent || '';
+            document.getElementById('title').value = savedTitle || '';
         }
         
         // Speichern bei Änderungen
         document.getElementById('editor').addEventListener('input', function() {
-            localStorage.setItem('editorContent', this.innerHTML);
+            localStorage.setItem(`editorContent_${currentNote}`, this.innerHTML);
         });
         
         document.getElementById('title').addEventListener('input', function() {
-            localStorage.setItem('editorTitle', this.value);
+            localStorage.setItem(`editorTitle_${currentNote}`, this.value);
         });
         
         // Verbesserte Text-Formatierung
@@ -409,11 +485,11 @@
         
         // Editor leeren
         function clearEditor() {
-            if (confirm('Möchtest du wirklich alle Inhalte löschen?')) {
+            if (confirm('Möchtest du wirklich alle Inhalte der aktuellen Notiz löschen?')) {
                 document.getElementById('editor').innerHTML = '';
                 document.getElementById('title').value = '';
-                localStorage.removeItem('editorContent');
-                localStorage.removeItem('editorTitle');
+                localStorage.removeItem(`editorContent_${currentNote}`);
+                localStorage.removeItem(`editorTitle_${currentNote}`);
             }
         }
         
@@ -423,7 +499,7 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                const title = document.getElementById('title').value || 'Unbenannte Notiz';
+                const title = document.getElementById('title').value || `Notiz ${currentNote}`;
                 const content = document.getElementById('editor').innerText;
                 
                 doc.setFontSize(18);
@@ -445,7 +521,7 @@
         // Als Text exportieren - einfache und zuverlässige Methode
         function exportAsText() {
             try {
-                const title = document.getElementById('title').value || 'Unbenannte Notiz';
+                const title = document.getElementById('title').value || `Notiz ${currentNote}`;
                 const content = document.getElementById('editor').innerText;
                 
                 // Titel und Inhalt kombinieren
@@ -470,6 +546,9 @@
         
         // Fokus auf den Editor setzen, wenn die Seite geladen ist
         window.onload = function() {
+            // Erste Notiz laden
+            loadCurrentNote();
+            
             // Stelle sicher, dass der Editor richtig initialisiert wird
             document.getElementById('editor').focus();
             
@@ -497,5 +576,5 @@
             }
         };
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9421bc0117e58cb6',t:'MTc0NzYzODIwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9423e929e23cd34c',t:'MTc0NzY2MTAyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
